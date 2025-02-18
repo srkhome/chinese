@@ -47,25 +47,55 @@ drawArea.width = 200;
 drawArea.height = 200;
 let drawing = false;
 
-// 監聽滑鼠事件（可適用於觸控裝置的事件作擴充）
-drawArea.addEventListener("mousedown", () => {
-  drawing = true;
-  userStrokes++; // 每次按下代表開始一筆
-});
-drawArea.addEventListener("mouseup", () => { drawing = false; });
-drawArea.addEventListener("mousemove", draw);
-
-function draw(event) {
-  if (!drawing) return;
+// 共用的繪圖函數
+function drawPoint(x, y) {
   ctx.fillStyle = "black";
   ctx.beginPath();
-  ctx.arc(event.offsetX, event.offsetY, 3, 0, Math.PI * 2);
+  ctx.arc(x, y, 3, 0, Math.PI * 2);
   ctx.fill();
 }
 
+// 處理滑鼠事件
+drawArea.addEventListener("mousedown", (e) => {
+  drawing = true;
+  userStrokes++; // 開始新筆劃
+  drawPoint(e.offsetX, e.offsetY);
+});
+drawArea.addEventListener("mousemove", (e) => {
+  if (!drawing) return;
+  drawPoint(e.offsetX, e.offsetY);
+});
+drawArea.addEventListener("mouseup", () => {
+  drawing = false;
+});
+
+// 處理觸控事件（適用於手機與平板）
+drawArea.addEventListener("touchstart", (e) => {
+  e.preventDefault(); // 防止捲動
+  drawing = true;
+  userStrokes++; // 開始新筆劃
+  const touch = e.touches[0];
+  const rect = drawArea.getBoundingClientRect();
+  const x = touch.clientX - rect.left;
+  const y = touch.clientY - rect.top;
+  drawPoint(x, y);
+});
+drawArea.addEventListener("touchmove", (e) => {
+  e.preventDefault();
+  if (!drawing) return;
+  const touch = e.touches[0];
+  const rect = drawArea.getBoundingClientRect();
+  const x = touch.clientX - rect.left;
+  const y = touch.clientY - rect.top;
+  drawPoint(x, y);
+});
+drawArea.addEventListener("touchend", (e) => {
+  e.preventDefault();
+  drawing = false;
+});
+
 // 開始新題目
 function startGame() {
-  // 隨機選擇一個字
   currentWord = words[Math.floor(Math.random() * words.length)];
   charDisplay.textContent = currentWord.word;
   userStrokes = 0;
