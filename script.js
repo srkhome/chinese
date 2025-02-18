@@ -1,4 +1,4 @@
-// 字庫：國小三年級常見簡單字（筆畫數僅供參考，請根據實際標準調整）
+// 字庫：國小三年級簡單字（筆畫數僅供參考，請根據實際標準調整）
 const words = [
   { word: "要", strokes: 9 },
   { word: "靜", strokes: 14 },
@@ -58,7 +58,7 @@ function drawPoint(x, y) {
 // 處理滑鼠事件
 drawArea.addEventListener("mousedown", (e) => {
   drawing = true;
-  userStrokes++; // 開始新筆劃
+  userStrokes++; // 每次按下表示開始一筆
   drawPoint(e.offsetX, e.offsetY);
 });
 drawArea.addEventListener("mousemove", (e) => {
@@ -69,9 +69,9 @@ drawArea.addEventListener("mouseup", () => {
   drawing = false;
 });
 
-// 處理觸控事件（適用於手機與平板）
+// 處理觸控事件（加入 {passive: false} 選項以確保 preventDefault 生效）
 drawArea.addEventListener("touchstart", (e) => {
-  e.preventDefault(); // 防止捲動
+  e.preventDefault();
   drawing = true;
   userStrokes++; // 開始新筆劃
   const touch = e.touches[0];
@@ -79,7 +79,8 @@ drawArea.addEventListener("touchstart", (e) => {
   const x = touch.clientX - rect.left;
   const y = touch.clientY - rect.top;
   drawPoint(x, y);
-});
+}, { passive: false });
+
 drawArea.addEventListener("touchmove", (e) => {
   e.preventDefault();
   if (!drawing) return;
@@ -88,11 +89,12 @@ drawArea.addEventListener("touchmove", (e) => {
   const x = touch.clientX - rect.left;
   const y = touch.clientY - rect.top;
   drawPoint(x, y);
-});
+}, { passive: false });
+
 drawArea.addEventListener("touchend", (e) => {
   e.preventDefault();
   drawing = false;
-});
+}, { passive: false });
 
 // 開始新題目
 function startGame() {
