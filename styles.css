@@ -1,3 +1,10 @@
+/* 禁止頁面滾動 */
+html, body {
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+}
+
 body {
   font-family: Arial, sans-serif;
   text-align: center;
@@ -23,7 +30,7 @@ canvas {
   background-color: white;
   display: block;
   margin: auto;
-  /* 新增設定：禁止觸控預設行為 */
+  /* 確保 Canvas 不接收預設觸控行為 */
   touch-action: none;
 }
 
