@@ -45,40 +45,43 @@ const nextBtn = document.getElementById("next");
 const ctx = drawArea.getContext("2d");
 drawArea.width = 200;
 drawArea.height = 200;
+
+// 控制變數
 let drawing = false;
+let lastX, lastY;
 
-// 共用的繪圖函數
-function drawPoint(x, y) {
-  ctx.fillStyle = "black";
-  ctx.beginPath();
-  ctx.arc(x, y, 3, 0, Math.PI * 2);
-  ctx.fill();
-}
-
-// 處理滑鼠事件
+// 處理滑鼠事件：用線段連接每個座標，形成連續線
 drawArea.addEventListener("mousedown", (e) => {
   drawing = true;
-  userStrokes++; // 每次按下代表開始一筆
-  drawPoint(e.offsetX, e.offsetY);
+  userStrokes++; // 開始一個新筆劃
+  lastX = e.offsetX;
+  lastY = e.offsetY;
 });
 drawArea.addEventListener("mousemove", (e) => {
   if (!drawing) return;
-  drawPoint(e.offsetX, e.offsetY);
+  ctx.beginPath();
+  ctx.moveTo(lastX, lastY);
+  ctx.lineTo(e.offsetX, e.offsetY);
+  ctx.strokeStyle = "black";
+  ctx.lineWidth = 3;
+  ctx.lineCap = "round";
+  ctx.stroke();
+  lastX = e.offsetX;
+  lastY = e.offsetY;
 });
 drawArea.addEventListener("mouseup", () => {
   drawing = false;
 });
 
-// 處理觸控事件（加入 { passive: false } 選項）
+// 處理觸控事件（連續畫線，使用 { passive: false } 以確保 preventDefault 生效）
 drawArea.addEventListener("touchstart", (e) => {
   e.preventDefault();
   drawing = true;
   userStrokes++; // 開始新筆劃
   const touch = e.touches[0];
   const rect = drawArea.getBoundingClientRect();
-  const x = touch.clientX - rect.left;
-  const y = touch.clientY - rect.top;
-  drawPoint(x, y);
+  lastX = touch.clientX - rect.left;
+  lastY = touch.clientY - rect.top;
 }, { passive: false });
 
 drawArea.addEventListener("touchmove", (e) => {
@@ -88,7 +91,15 @@ drawArea.addEventListener("touchmove", (e) => {
   const rect = drawArea.getBoundingClientRect();
   const x = touch.clientX - rect.left;
   const y = touch.clientY - rect.top;
-  drawPoint(x, y);
+  ctx.beginPath();
+  ctx.moveTo(lastX, lastY);
+  ctx.lineTo(x, y);
+  ctx.strokeStyle = "black";
+  ctx.lineWidth = 3;
+  ctx.lineCap = "round";
+  ctx.stroke();
+  lastX = x;
+  lastY = y;
 }, { passive: false });
 
 drawArea.addEventListener("touchend", (e) => {
@@ -96,9 +107,8 @@ drawArea.addEventListener("touchend", (e) => {
   drawing = false;
 }, { passive: false });
 
-// 全域攔截 touchmove 事件，避免在其他區域發生預設捲動行為
+// 全域攔截 touchmove，避免頁面捲動
 document.addEventListener("touchmove", function(e) {
-  // 若事件目標不是 canvas，就不要 preventDefault 以保留其他觸控操作（或視需求調整）
   if (e.target === drawArea) {
     e.preventDefault();
   }
