@@ -23,6 +23,8 @@ canvas {
   background-color: white;
   display: block;
   margin: auto;
+  /* 新增設定：禁止觸控預設行為 */
+  touch-action: none;
 }
 
 button {
