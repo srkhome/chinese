@@ -58,7 +58,7 @@ function drawPoint(x, y) {
 // 處理滑鼠事件
 drawArea.addEventListener("mousedown", (e) => {
   drawing = true;
-  userStrokes++; // 每次按下表示開始一筆
+  userStrokes++; // 每次按下代表開始一筆
   drawPoint(e.offsetX, e.offsetY);
 });
 drawArea.addEventListener("mousemove", (e) => {
@@ -69,7 +69,7 @@ drawArea.addEventListener("mouseup", () => {
   drawing = false;
 });
 
-// 處理觸控事件（加入 {passive: false} 選項以確保 preventDefault 生效）
+// 處理觸控事件（加入 { passive: false } 選項）
 drawArea.addEventListener("touchstart", (e) => {
   e.preventDefault();
   drawing = true;
@@ -94,6 +94,14 @@ drawArea.addEventListener("touchmove", (e) => {
 drawArea.addEventListener("touchend", (e) => {
   e.preventDefault();
   drawing = false;
+}, { passive: false });
+
+// 全域攔截 touchmove 事件，避免在其他區域發生預設捲動行為
+document.addEventListener("touchmove", function(e) {
+  // 若事件目標不是 canvas，就不要 preventDefault 以保留其他觸控操作（或視需求調整）
+  if (e.target === drawArea) {
+    e.preventDefault();
+  }
 }, { passive: false });
 
 // 開始新題目
