@@ -1,21 +1,38 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-  <meta charset="UTF-8">
-  <!-- 禁止縮放與頁面滾動 -->
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>筆順挑戰遊戲</title>
-  <link rel="stylesheet" href="styles.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>筆順練習</title>
+    <style>
+        body { text-align: center; font-family: Arial, sans-serif; }
+        #drawArea { border: 3px solid black; touch-action: none; background-color: white; }
+        #feedback { font-size: 20px; margin-top: 10px; }
+        #next { display: none; }
+        .correct { border: 3px solid green; animation: scaleUp 0.3s ease-in-out; }
+        .wrong { animation: flashRed 0.3s ease-in-out 3; }
+        
+        @keyframes scaleUp {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        @keyframes flashRed {
+            0%, 100% { background-color: white; }
+            50% { background-color: red; }
+        }
+    </style>
 </head>
 <body>
-  <h1>筆順挑戰遊戲</h1>
-  <div id="game-container">
-    <div id="question">請寫出：<span id="character"></span></div>
+    <h1>筆順練習</h1>
+    <h2 id="character"></h2>
     <canvas id="drawArea"></canvas>
-    <button id="submit">提交</button>
-    <p id="feedback"></p>
+    <br>
+    <button id="submit">提交答案</button>
     <button id="next">下一題</button>
-  </div>
-  <script src="script.js"></script>
+    <p id="feedback"></p>
+
+    <script src="script.js"></script>
 </body>
 </html>
