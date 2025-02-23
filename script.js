@@ -1,160 +1,92 @@
-// 字庫
-const words = ["要", "靜", "天", "空", "雲", "水", "蟲", "鳥", "草", "先", "完", "再", "去", "園", "聽", "沒", "正", "唱", "著", "輕", "快", "歌", "出", "新", "芽", "聞", "身", "香", "呢"];
-
-let currentWord = null;
-
 // 取得 HTML 元素
-const charDisplay = document.getElementById("character");
 const drawArea = document.getElementById("drawArea");
-const submitBtn = document.getElementById("submit");
-const feedback = document.getElementById("feedback");
-const nextBtn = document.getElementById("next");
-
-// 初始化 canvas
 const ctx = drawArea.getContext("2d");
+const feedback = document.getElementById("feedback");
+const submitBtn = document.getElementById("submit");
+const nextBtn = document.getElementById("next");
+const charDisplay = document.getElementById("character");
+
 drawArea.width = 200;
 drawArea.height = 200;
 
-// 筆順繪製相關變數
-let strokes = [];
-let currentStroke = [];
 let drawing = false;
+let strokes = [];
 
-// 取得滑鼠與觸控座標
-function getTouchPos(e) {
-  const touch = e.touches[0];
-  const rect = drawArea.getBoundingClientRect();
-  return { x: touch.clientX - rect.left, y: touch.clientY - rect.top };
-}
-function getMousePos(e) {
-  return { x: e.offsetX, y: e.offsetY };
-}
-
-// 平滑繪製筆劃
-function drawStroke(points) {
-  if (points.length === 0) return;
-  ctx.beginPath();
-  ctx.moveTo(points[0].x, points[0].y);
-  for (let i = 1; i < points.length - 1; i++) {
-    const midX = (points[i].x + points[i + 1].x) / 2;
-    const midY = (points[i].y + points[i + 1].y) / 2;
-    ctx.quadraticCurveTo(points[i].x, points[i].y, midX, midY);
-  }
-  ctx.lineTo(points[points.length - 1].x, points[points.length - 1].y);
-  ctx.stroke();
+// 取得座標
+function getPos(e) {
+    if (e.touches) {
+        const touch = e.touches[0];
+        const rect = drawArea.getBoundingClientRect();
+        return { x: touch.clientX - rect.left, y: touch.clientY - rect.top };
+    } else {
+        return { x: e.offsetX, y: e.offsetY };
+    }
 }
 
-// 重新繪製畫布
-function redrawCanvas() {
-  ctx.clearRect(0, 0, drawArea.width, drawArea.height);
-  ctx.lineWidth = 3;
-  ctx.strokeStyle = "black";
-  ctx.lineJoin = "round";
-  ctx.lineCap = "round";
-  strokes.forEach(stroke => drawStroke(stroke));
-  drawStroke(currentStroke);
+// 滑鼠與觸控事件
+drawArea.addEventListener("mousedown", (e) => { drawing = true; strokes.push([getPos(e)]); });
+drawArea.addEventListener("mousemove", (e) => { if (drawing) strokes[strokes.length - 1].push(getPos(e)); });
+drawArea.addEventListener("mouseup", () => { drawing = false; });
+
+drawArea.addEventListener("touchstart", (e) => { drawing = true; strokes.push([getPos(e)]); }, { passive: false });
+drawArea.addEventListener("touchmove", (e) => { if (drawing) strokes[strokes.length - 1].push(getPos(e)); }, { passive: false });
+drawArea.addEventListener("touchend", () => { drawing = false; }, { passive: false });
+
+// 防止滾動
+document.addEventListener("touchmove", function(e) { if (e.target === drawArea) e.preventDefault(); }, { passive: false });
+
+// **載入 AI 模型**
+let model;
+async function loadModel() {
+    model = await tf.loadLayersModel("https://your-model-url/model.json");  // 請換成你訓練的模型網址
+    console.log("AI 模型已載入");
+}
+loadModel();
+
+// **將筆畫轉換為 AI 可讀數據**
+function processDrawing() {
+    let inputArray = new Array(28 * 28).fill(0);
+    strokes.forEach(stroke => {
+        stroke.forEach(point => {
+            let x = Math.floor(point.x / drawArea.width * 28);
+            let y = Math.floor(point.y / drawArea.height * 28);
+            inputArray[y * 28 + x] = 1;
+        });
+    });
+    return tf.tensor([inputArray]).reshape([1, 28, 28, 1]);
 }
 
-// 滑鼠事件
-drawArea.addEventListener("mousedown", (e) => {
-  drawing = true;
-  currentStroke = [];
-  currentStroke.push(getMousePos(e));
+// **AI 判斷筆順是否正確**
+async function checkHandwriting() {
+    if (!model) {
+        feedback.textContent = "AI 模型尚未載入";
+        feedback.style.color = "gray";
+        return;
+    }
+
+    let inputTensor = processDrawing();
+    let prediction = model.predict(inputTensor);
+    let result = await prediction.data();
+
+    let maxIndex = result.indexOf(Math.max(...result));
+    if (maxIndex === 1) {  // 1 代表筆順正確
+        feedback.textContent = "正確！";
+        feedback.style.color = "green";
+        drawArea.classList.add("correct");
+    } else {
+        feedback.textContent = "錯誤，請再試一次";
+        feedback.style.color = "red";
+        drawArea.classList.add("wrong");
+    }
+
+    nextBtn.style.display = "block";
+}
+
+submitBtn.addEventListener("click", checkHandwriting);
+nextBtn.addEventListener("click", () => {
+    strokes = [];
+    ctx.clearRect(0, 0, drawArea.width, drawArea.height);
+    feedback.textContent = "";
+    drawArea.classList.remove("correct", "wrong");
+    nextBtn.style.display = "none";
 });
-drawArea.addEventListener("mousemove", (e) => {
-  if (!drawing) return;
-  currentStroke.push(getMousePos(e));
-  redrawCanvas();
-});
-drawArea.addEventListener("mouseup", () => {
-  drawing = false;
-  strokes.push(currentStroke);
-});
-
-// 觸控事件
-drawArea.addEventListener("touchstart", (e) => {
-  e.preventDefault();
-  drawing = true;
-  currentStroke = [];
-  currentStroke.push(getTouchPos(e));
-}, { passive: false });
-
-drawArea.addEventListener("touchmove", (e) => {
-  e.preventDefault();
-  if (!drawing) return;
-  currentStroke.push(getTouchPos(e));
-  redrawCanvas();
-}, { passive: false });
-
-drawArea.addEventListener("touchend", (e) => {
-  e.preventDefault();
-  drawing = false;
-  strokes.push(currentStroke);
-}, { passive: false });
-
-// 防止全域滾動
-document.addEventListener("touchmove", function(e) {
-  if (e.target === drawArea) {
-    e.preventDefault();
-  }
-}, { passive: false });
-
-// **影像比對**
-function compareDrawing() {
-  // 取得使用者繪製的影像
-  const userDrawing = drawArea.toDataURL();
-
-  // 建立標準字影像（這裡模擬，未來可用 AI 自動生成）
-  const standardCanvas = document.createElement("canvas");
-  const standardCtx = standardCanvas.getContext("2d");
-  standardCanvas.width = 200;
-  standardCanvas.height = 200;
-  standardCtx.font = "150px Arial";
-  standardCtx.fillText(currentWord, 40, 150);
-  
-  const standardDrawing = standardCanvas.toDataURL();
-
-  return userDrawing === standardDrawing;  // 這裡可用更精確的圖像比對技術
-}
-
-// 開始新題目
-function startGame() {
-  currentWord = words[Math.floor(Math.random() * words.length)];
-  charDisplay.textContent = currentWord;
-  feedback.textContent = "";
-  strokes = [];
-  currentStroke = [];
-  ctx.clearRect(0, 0, drawArea.width, drawArea.height);
-  
-  // 隱藏「下一題」按鈕
-  nextBtn.style.display = "none";
-  drawArea.classList.remove("correct", "wrong");
-}
-
-submitBtn.addEventListener("click", () => {
-  if (compareDrawing()) {
-    feedback.textContent = "正確！";
-    feedback.style.color = "green";
-    drawArea.classList.add("correct");
-  } else {
-    feedback.textContent = "錯誤，請再試一次";
-    feedback.style.color = "red";
-    drawArea.classList.add("wrong");
-  }
-  
-  // 顯示「下一題」按鈕
-  nextBtn.style.display = "block";
-});
-
-nextBtn.addEventListener("click", startGame);
-
-// 預設隱藏「下一題」按鈕，開始遊戲
-nextBtn.style.display = "none";
-startGame();
-
-
-
-
-
-
-
