@@ -3,36 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>筆順練習</title>
+    <title>筆順 AI 辨識</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
     <style>
         body { text-align: center; font-family: Arial, sans-serif; }
         #drawArea { border: 3px solid black; touch-action: none; background-color: white; }
         #feedback { font-size: 20px; margin-top: 10px; }
         #next { display: none; }
-        .correct { border: 3px solid green; animation: scaleUp 0.3s ease-in-out; }
-        .wrong { animation: flashRed 0.3s ease-in-out 3; }
-        
-        @keyframes scaleUp {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-            100% { transform: scale(1); }
-        }
-        
-        @keyframes flashRed {
-            0%, 100% { background-color: white; }
-            50% { background-color: red; }
-        }
+        .correct { border: 3px solid green; }
+        .wrong { border: 3px solid red; }
     </style>
 </head>
 <body>
-    <h1>筆順練習</h1>
+    <h1>筆順 AI 辨識</h1>
     <h2 id="character"></h2>
     <canvas id="drawArea"></canvas>
     <br>
     <button id="submit">提交答案</button>
     <button id="next">下一題</button>
     <p id="feedback"></p>
-
+    
     <script src="script.js"></script>
 </body>
 </html>
